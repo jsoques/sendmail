@@ -163,7 +163,7 @@ public class sendmail {
 
             protected PasswordAuthentication getPasswordAuthentication() {
 
-                return new PasswordAuthentication(frommail, password); //"korj qwts dgve ugxe"
+                return new PasswordAuthentication(frommail, password);
 
             }
 
