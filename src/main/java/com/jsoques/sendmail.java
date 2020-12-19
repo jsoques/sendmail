@@ -5,37 +5,17 @@
  */
 package com.jsoques;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import javax.mail.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.logging.Logger;
-
 import java.util.Properties;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.SimpleFormatter;
-import javax.mail.Address;
-import javax.mail.BodyPart;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Multipart;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
-import javax.mail.internet.MimeBodyPart;
+import java.util.logging.*;
 
 /**
  *
@@ -43,12 +23,9 @@ import javax.mail.internet.MimeBodyPart;
  */
 public class sendmail {
 
-    private static String fromemail = "";
-    private static String password = "";
-
     private final static Logger LOGGER = Logger.getLogger(sendmail.class.getName());
 
-    public static void main(String[] args) throws IOException, Exception {
+    public static void main(String[] args) throws Exception {
 
         LOGGER.setLevel(Level.INFO);
         FileHandler fileTxt;
@@ -90,6 +67,8 @@ public class sendmail {
             }
         }
 
+        String fromemail;
+        String password;
         try (InputStream input = new FileInputStream(cfile)) {
 
             Properties prop = new Properties();
@@ -105,7 +84,7 @@ public class sendmail {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
         Date date = new Date(System.currentTimeMillis());
 
-        fileTxt = new FileHandler(cpath + File.separator + "log" + File.separator + "log" + formatter.format(date).toString() + ".txt", Boolean.TRUE);
+        fileTxt = new FileHandler(cpath + File.separator + "log" + File.separator + "log" + formatter.format(date) + ".txt", Boolean.TRUE);
 
         //System.out.println("CPATH: " + cpath);
         // create a TXT formatter
@@ -129,13 +108,12 @@ public class sendmail {
         String tomail = params[0].toLowerCase();
         String subject = params[1].trim();
         String body = params[2];
-        String attachment = "";
+        String attachment;
         String replyto = "";
         String frommail = fromemail;
 
-        String unescapedString = org.jsoup.parser.Parser.unescapeEntities(body, true);
         //System.out.println("HTML Body:\n" + unescapedString + "\n");
-        body = unescapedString;
+        body = org.jsoup.parser.Parser.unescapeEntities(body, true);
 
         if (params[params.length - 1].contains("replyto:")) {
             replyto = params[params.length - 1].replace("replyto:", "");
@@ -143,7 +121,7 @@ public class sendmail {
             params = Arrays.copyOf(params, params.length - 1);
         }
 
-        String attachments = "";
+        StringBuilder attachments;
 
         // Assuming you are sending email from through gmails smtp
         String host = "smtp.gmail.com";
@@ -198,7 +176,7 @@ public class sendmail {
                 //logger.log(Level.INFO, "Sending without attachment");
             } else {
                 try {
-                    System.out.println("Params: " + new Object[]{Arrays.toString(params), params.length});
+                    System.out.println("Params: " + Arrays.toString(new Object[]{Arrays.toString(params), params.length}));
                     System.out.println(params[3]);
                     File attachfile = new File(params[3].replace('"', ' ').trim());
                     boolean exists = attachfile.exists();
@@ -226,7 +204,7 @@ public class sendmail {
                     message.setContent(multipart);
 
                     logger.log(Level.INFO, "Sending with attachment: " + params[3]);
-                    attachments = "Sending with attachment(s): \r\n " + params[3];
+                    attachments = new StringBuilder("Sending with attachment(s): \r\n " + params[3]);
 
                     if (params.length > 4) {
                         File f;
@@ -237,10 +215,10 @@ public class sendmail {
                             attachmentPart = new MimeBodyPart();
                             attachmentPart.attachFile(f);
                             multipart.addBodyPart(attachmentPart);
-                            attachments += "\r\n " + params[a];
+                            attachments.append("\r\n ").append(params[a]);
                         }
                     }
-                    logger.log(Level.INFO, attachments);
+                    logger.log(Level.INFO, attachments.toString());
                 } catch (Exception ex) {
                     StringWriter sw = new StringWriter();
                     PrintWriter pw = new PrintWriter(sw);
