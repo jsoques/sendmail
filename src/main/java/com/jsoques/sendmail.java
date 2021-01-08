@@ -172,7 +172,8 @@ public class sendmail {
 
             if (params.length == 3) {
                 // Now set the actual message
-                message.setText(body);
+                //message.setText(body);
+                message.setContent(body, "text/html");
                 //logger.log(Level.INFO, "Sending without attachment");
             } else {
                 try {
